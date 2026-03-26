@@ -247,7 +247,6 @@
   </div>
   <div class="main-card">
     <div class="filter-row" id="filterContainer">
-      <!-- 筛选框会动态生成（排除昵称、联系方式、邮箱） -->
     </div>
   </div>
   <div class="main-card" id="listWrapper">
@@ -282,6 +281,11 @@ function showPage(id) {
   document.querySelectorAll(".page").forEach(p => p.classList.remove("active"))
   document.getElementById(id).classList.add("active")
 }
+
+// 🔥 修复：页面一打开就自动显示登录页
+window.onload = function() {
+  showPage("loginPage");
+};
 
 function updateFileName() {
   const fi = document.getElementById("excelFile")
@@ -320,7 +324,6 @@ function refreshFilters() {
   container.innerHTML = ""
   if (headers.length === 0) return
 
-  // 排除这三个字段不生成筛选框
   const excludeFields = ["昵称", "联系方式", "邮箱"]
 
   headers.forEach(h => {
