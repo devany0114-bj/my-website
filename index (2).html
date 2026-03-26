@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>创作者管理平台</title>
+<style>
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: "Segoe UI", Roboto, sans-serif;
+  }
+
+  body {
+    background: linear-gradient(135deg, #a7f3d0 0%, #86efac 30%, #93c5fd 70%, #bfdbfe 100%);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  body::before {
+    content: "";
+    position: absolute;
+    top: -150px;
+    right: -150px;
+    width: 300px;
+    height: 300px;
+    background: rgba(255, 255, 255, 0.25);
+    border-radius: 50%;
+    filter: blur(60px);
+    z-index: 0;
+  }
+  body::after {
+    content: "";
+    position: absolute;
+    bottom: -120px;
+    left: -120px;
+    width: 250px;
+    height: 250px;
+    background: rgba(167, 243, 208, 0.25);
+    border-radius: 50%;
+    filter: blur(60px);
+    z-index: 0;
+  }
+
+  .page { display: none; position: relative; z-index: 1; width: 100%; max-width: 1000px; }
+  .page.active { display: block; }
+
+  #loginPage { max-width: 360px; }
+  .login-card {
+    background: rgba(255, 255, 255, 0.35);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-radius: 28px;
+    padding: 36px 28px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.08);
+    border: 1px solid rgba(255,255,255,0.4);
+  }
+
+  .login-title {
+    font-size: 26px;
+    font-weight: 700;
+    color: #1f2937;
+    margin-bottom: 28px;
+    letter-spacing: 0.5px;
+  }
+  #loginPage .login-title { text-align: center; }
+  #mainPage .login-title { text-align: left; }
+
+  .input-group {
+    position: relative;
+    margin-bottom: 20px;
+  }
+  .input-icon {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #6b7280;
+    font-size: 18px;
+  }
+  .input-group input {
+    width: 100%;
+    padding: 16px 16px 16px 48px;
+    background: rgba(255, 255, 255, 0.45);
+    border: 1px solid rgba(255,255,255,0.5);
+    border-radius: 16px;
+    font-size: 15px;
+    color: #1f2937;
+    transition: all 0.2s;
+  }
+  .input-group input::placeholder { color: #6b7280; }
+  .input-group input:focus {
+    outline: none;
+    background: rgba(255, 255, 255, 0.6);
+    border-color: #10b981;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
+  }
+
+  .login-btn {
+    width: 100%;
+    padding: 16px;
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.7), rgba(52, 211, 153, 0.7));
+    border: none;
+    border-radius: 16px;
+    color: white;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-top: 12px;
+  }
+  .login-btn:hover {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.85), rgba(52, 211, 153, 0.85));
+    transform: translateY(-2px);
+  }
+  .login-btn:active { transform: translateY(1px); }
+
+  .main-card {
+    background: #fff;
+    border-radius: 24px;
+    padding: 28px;
+    margin-bottom: 20px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.07);
+  }
+
+  .file-input-wrapper {
+    position: relative;
+    margin-bottom: 14px;
+  }
+  input[type="file"] {
+    position: absolute;
+    opacity: 0;
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+  }
+  .file-input-display {
+    width: 100%;
+    padding: 14px 16px;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    font-size: 15px;
+    background: white;
+    color: #4b5563;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .file-input-display::before { content: "📁"; font-size: 18px; }
+
+  button {
+    background: white;
+    color: #10b981;
+    border: none;
+    padding: 18px;
+    border-radius: 16px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    width: 100%;
+    margin-bottom: 14px;
+    box-shadow: 0 4px 0 #d1fae5, 0 6px 12px rgba(16, 185, 129, 0.2);
+    transition: all 0.2s;
+  }
+  button.success {
+    background: linear-gradient(135deg, #10b981, #34d399);
+    color: white;
+    box-shadow: 0 4px 0 #059669, 0 6px 12px rgba(16, 185, 129, 0.3);
+  }
+  button.secondary {
+    background: #f3f4f6;
+    color: #4b5563;
+    box-shadow: 0 4px 0 #e5e7eb, 0 6px 12px rgba(0,0,0,0.1);
+  }
+
+  .filter-row {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .filter-row select {
+    padding: 14px 16px;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    font-size: 15px;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
+    background-position: right 14px center;
+    background-repeat: no-repeat;
+    background-size: 16px;
+    padding-right: 44px;
+    cursor: pointer;
+    overflow-y: auto;
+    max-height: 200px;
+  }
+  select::-webkit-scrollbar { width: 6px; }
+  select::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); border-radius: 3px; }
+
+  .creator-item {
+    padding: 20px;
+    border-radius: 16px;
+    background: #f9fafb;
+    margin-bottom: 12px;
+  }
+  .creator-name { font-weight: bold; font-size: 28px; margin-bottom: 12px; }
+  .creator-info { font-size: 18px; color: #4b5563; line-height: 1.8; }
+
+  .tip { display: none; }
+</style>
+</head>
+<body>
+
+<div class="page active" id="loginPage">
+  <div class="login-card">
+    <div class="login-title">创作者管理平台</div>
+    <div class="input-group">
+      <span class="input-icon">👤</span>
+      <input type="text" id="loginUser" placeholder="账号">
+    </div>
+    <div class="input-group">
+      <span class="input-icon">🔒</span>
+      <input type="password" id="loginPwd" placeholder="密码">
+    </div>
+    <button class="login-btn" onclick="doLogin()">登录</button>
+  </div>
+</div>
+
+<div class="page" id="mainPage">
+  <div class="main-card">
+    <div class="login-title">创作者管理平台</div>
+    <div class="file-input-wrapper">
+      <input type="file" id="excelFile" accept=".csv" onchange="updateFileName()">
+      <div class="file-input-display" id="fileNameDisplay">选择文件</div>
+    </div>
+    <button class="success" onclick="importExcel()">导入 CSV 创作者名单</button>
+    <button onclick="exportAll()">导出全部创作者 Excel</button>
+    <button class="success" onclick="exportFiltered()">导出当前筛选结果 Excel</button>
+    <button class="secondary" onclick="logout()">退出登录</button>
+    <div class="tip">说明文字已隐藏</div>
+  </div>
+  <div class="main-card">
+    <div class="filter-row" id="filterContainer">
+      <!-- 筛选框会动态生成（排除昵称、联系方式、邮箱） -->
+    </div>
+  </div>
+  <div class="main-card" id="listWrapper">
+    <div style="text-align:center; padding:20px; font-size:18px;">暂无数据</div>
+  </div>
+</div>
+
+<script>
+const ADMIN_USER = "devany"
+const ADMIN_PWD = "12345678"
+let rawList = []
+let filteredList = []
+let headers = []
+
+function doLogin() {
+  let u = document.getElementById("loginUser").value.trim()
+  let p = document.getElementById("loginPwd").value.trim()
+  if (u === ADMIN_USER && p === ADMIN_PWD) {
+    showPage("mainPage")
+    loadFromStorage()
+    refreshFilters()
+    renderList()
+  } else {
+    alert("账号或密码错误")
+  }
+}
+function logout() {
+  showPage("loginPage")
+  document.getElementById("fileNameDisplay").textContent = "选择文件"
+}
+function showPage(id) {
+  document.querySelectorAll(".page").forEach(p => p.classList.remove("active"))
+  document.getElementById(id).classList.add("active")
+}
+
+function updateFileName() {
+  const fi = document.getElementById("excelFile")
+  const dis = document.getElementById("fileNameDisplay")
+  dis.textContent = fi.files?.[0]?.name || "选择文件"
+}
+
+function importExcel() {
+  const fi = document.getElementById("excelFile")
+  if (!fi.files?.[0]) { alert("请先选择 CSV 文件"); return }
+  const reader = new FileReader()
+  reader.onload = e => {
+    try {
+      let text = e.target.result
+      let lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean)
+      headers = lines[0].split(",").map(h => h.trim())
+      let data = []
+      for (let i = 1; i < lines.length; i++) {
+        let row = lines[i].split(",").map(c => c.trim())
+        let obj = {}
+        headers.forEach((h, idx) => { obj[h] = row[idx] || "" })
+        data.push(obj)
+      }
+      rawList = data
+      saveToStorage()
+      refreshFilters()
+      doFilter()
+      alert(`导入成功：共 ${rawList.length} 条`)
+    } catch (e) { alert("导入失败，请检查 CSV 格式") }
+  }
+  reader.readAsText(fi.files[0])
+}
+
+function refreshFilters() {
+  const container = document.getElementById("filterContainer")
+  container.innerHTML = ""
+  if (headers.length === 0) return
+
+  // 排除这三个字段不生成筛选框
+  const excludeFields = ["昵称", "联系方式", "邮箱"]
+
+  headers.forEach(h => {
+    if (excludeFields.includes(h)) return
+    let uniqueValues = [...new Set(rawList.map(x => x[h] || "").filter(Boolean))].sort()
+    let sel = document.createElement("select")
+    sel.id = `s_${h}`
+    sel.innerHTML = `<option value="">${h}：全部</option>`
+    uniqueValues.forEach(v => {
+      let opt = document.createElement("option")
+      opt.value = v
+      opt.textContent = v
+      sel.appendChild(opt)
+    })
+    sel.addEventListener("change", doFilter)
+    container.appendChild(sel)
+  })
+}
+
+function doFilter() {
+  if (headers.length === 0) { filteredList = rawList; renderList(); return }
+  filteredList = rawList.filter(x => {
+    return headers.every(h => {
+      const excludeFields = ["昵称", "联系方式", "邮箱"]
+      if (excludeFields.includes(h)) return true
+      let val = document.getElementById(`s_${h}`)?.value || ""
+      return val === "" || x[h] === val
+    })
+  })
+  renderList()
+}
+
+function renderList() {
+  const wrap = document.getElementById("listWrapper")
+  if (filteredList.length === 0) {
+    wrap.innerHTML = `<div style="text-align:center; padding:20px; font-size:18px;">暂无匹配数据</div>`
+    return
+  }
+  wrap.innerHTML = filteredList.map((x, i) => `
+    <div class="creator-item">
+      <div class="creator-name">${x.昵称 || '-'}</div>
+      <div class="creator-info">
+        ${headers.map(h => `${h}：${x[h] || '-'}`).join('<br>')}
+      </div>
+    </div>
+  `).join("")
+}
+
+function exportAll() { exportCSV(rawList, "创作者全部名单.csv") }
+function exportFiltered() { exportCSV(filteredList, "创作者筛选结果.csv") }
+function exportCSV(list, filename) {
+  if (list.length === 0) { alert("无数据可导出"); return }
+  let lines = [headers.join(",")]
+  list.forEach(x => {
+    let row = headers.map(h => `"${(x[h] || "").replace(/"/g, '""')}"`)
+    lines.push(row.join(","))
+  })
+  let blob = new Blob([lines.join("\n")], { type: "text/csv;charset=utf-8" })
+  let a = document.createElement("a")
+  a.href = URL.createObjectURL(blob)
+  a.download = filename
+  a.click()
+}
+
+function saveToStorage() {
+  localStorage.setItem("creator_data", JSON.stringify(rawList))
+  localStorage.setItem("creator_headers", JSON.stringify(headers))
+}
+function loadFromStorage() {
+  let s = localStorage.getItem("creator_data")
+  let h = localStorage.getItem("creator_headers")
+  if (s) rawList = JSON.parse(s)
+  if (h) headers = JSON.parse(h)
+}
+</script>
+</body>
+</html>
